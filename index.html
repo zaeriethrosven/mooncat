@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171320">
+  <title>Mooncat — a tiny shared world</title>
+  <style>
+    :root {
+      --bg: #14111b;
+      --panel: #201b2b;
+      --panel2: #292236;
+      --line: #40344f;
+      --text: #f3edf8;
+      --muted: #b7a9c8;
+      --lilac: #c7a8ff;
+      --pink: #ffb6d5;
+      --mint: #a9ead9;
+      --gold: #f5d28a;
+      --danger: #ff9da8;
+      --shadow: 0 18px 55px rgba(0,0,0,.28);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(127,86,166,.2), transparent 38%),
+        radial-gradient(ellipse at 95% 30%, rgba(78,125,135,.12), transparent 32%),
+        var(--bg);
+    }
+    body::before {
+      content: "✦  ·   ˚       ✧       ·    ✦       ˚      ·   ✧";
+      position: fixed; top: 16px; left: 0; right: 0; text-align: center;
+      color: rgba(221,202,255,.2); letter-spacing: .8rem; pointer-events: none;
+      font-size: 12px; z-index: -1;
+    }
+    .wrap { width: min(1120px, 100% - 32px); margin: 0 auto; padding: 28px 0 48px; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand-mark { display:grid; place-items:center; width:48px; height:48px; border-radius:17px; background:linear-gradient(135deg,#8d6ab5,#413354); box-shadow:var(--shadow); font-size:26px; }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { margin-bottom:2px; font-size:clamp(1.45rem,4vw,2rem); letter-spacing:.03em; }
+    .subtitle { margin:0; color:var(--muted); font-size:.92rem; }
+    .local-pill { border:1px solid var(--line); border-radius:999px; padding:8px 12px; color:var(--muted); font-size:.78rem; white-space:nowrap; background:rgba(32,27,43,.7); }
+    .layout { display:grid; grid-template-columns: 1.05fr .95fr; gap:18px; align-items:start; }
+    .panel { background:linear-gradient(160deg,rgba(41,34,54,.96),rgba(29,24,39,.97)); border:1px solid var(--line); border-radius:24px; padding:22px; box-shadow:var(--shadow); }
+    .pet-scene {
+      min-height:350px; border-radius:20px; position:relative; overflow:hidden;
+      display:flex; align-items:center; justify-content:center; flex-direction:column;
+      background:radial-gradient(ellipse at 50% 75%,rgba(151,115,182,.22),transparent 43%),linear-gradient(180deg,#211b31,#181522);
+      border:1px solid #453650; margin-bottom:18px;
+    }
+    .moon { position:absolute; top:24px; right:30px; width:47px; height:47px; border-radius:50%; background:#f0d8a0; box-shadow:0 0 30px rgba(240,216,160,.16); }
+    .moon::after { content:""; position:absolute; top:-5px; left:12px; width:43px; height:43px; border-radius:50%; background:#211b31; }
+    .star { position:absolute; color:#d9c2ff; opacity:.7; }
+    .star.s1 { top:57px; left:14%; } .star.s2 { top:105px; left:28%; font-size:11px; } .star.s3 { top:76px; right:24%; font-size:12px; }
+    .cat { font-size:clamp(100px,17vw,154px); line-height:1; filter:drop-shadow(0 14px 18px rgba(0,0,0,.35)); animation:bob 3.2s ease-in-out infinite; transform-origin:center; user-select:none; }
+    @keyframes bob { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-7px) rotate(1deg)} }
+    .pet-caption { margin-top:14px; text-align:center; padding:0 12px; }
+    .pet-caption h2 { margin-bottom:5px; font-size:1.45rem; }
+    .pet-caption p { color:var(--muted); margin-bottom:0; font-size:.9rem; }
+    .status-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .stat { background:rgba(17,14,24,.42); border:1px solid #3b3048; border-radius:16px; padding:12px; }
+    .stat-top { display:flex; justify-content:space-between; gap:8px; font-size:.85rem; margin-bottom:9px; }
+    .stat-top span:last-child { color:var(--muted); font-variant-numeric:tabular-nums; }
+    .bar { height:8px; background:#3b3146; border-radius:999px; overflow:hidden; }
+    .fill { height:100%; border-radius:999px; transition:width .3s ease; background:linear-gradient(90deg,#a78bfa,#f0afd5); }
+    .fill.mint { background:linear-gradient(90deg,#6bcdb5,#b1f1df); }
+    .fill.gold { background:linear-gradient(90deg,#dca95f,#f8df9b); }
+    .fill.pink { background:linear-gradient(90deg,#e78ab5,#ffc6df); }
+    .section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+    .section-head h2 { font-size:1.1rem; margin:0; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.13em; color:var(--lilac); font-size:.68rem; font-weight:800; }
+    .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:17px; }
+    button, input, textarea, select { font:inherit; }
+    button { cursor:pointer; border:1px solid #554364; border-radius:13px; padding:11px 12px; color:var(--text); background:#342942; transition:transform .15s ease,background .15s ease,border-color .15s ease; }
+    button:hover { background:#453452; border-color:#8d70a7; transform:translateY(-1px); }
+    button:active { transform:translateY(0); }
+    button.primary { color:#21172a; background:var(--lilac); border-color:var(--lilac); font-weight:800; }
+    button.primary:hover { background:#d7c1ff; }
+    button.soft { background:rgba(32,27,43,.5); }
+    .message { min-height:44px; margin:14px 0 0; padding:11px 13px; border-radius:13px; background:rgba(169,234,217,.08); border:1px solid rgba(169,234,217,.2); color:#c9f5e9; font-size:.88rem; }
+    .right-stack { display:grid; gap:18px; }
+    .tabs { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px; }
+    .tab { padding:8px 11px; font-size:.82rem; border-radius:999px; background:transparent; color:var(--muted); }
+    .tab.active { color:#21172a; background:var(--pink); border-color:var(--pink); font-weight:800; }
+    label { display:block; color:var(--muted); font-size:.82rem; margin-bottom:7px; }
+    input,textarea,select { width:100%; color:var(--text); background:#171320; border:1px solid #4a3b59; border-radius:12px; padding:11px 12px; outline:none; }
+    input:focus,textarea:focus,select:focus { border-color:var(--lilac); box-shadow:0 0 0 3px rgba(199,168,255,.12); }
+    textarea { min-height:86px; resize:vertical; }
+    .form-row { display:grid; gap:12px; margin-bottom:12px; }
+    .form-actions { display:flex; gap:9px; flex-wrap:wrap; }
+    .list { display:grid; gap:9px; margin-top:14px; }
+    .entry { padding:12px 13px; border-radius:14px; background:rgba(17,14,24,.45); border:1px solid #3c3049; }
+    .entry-top { display:flex; justify-content:space-between; gap:10px; align-items:start; margin-bottom:5px; }
+    .entry strong { font-size:.88rem; }
+    .entry time,.tiny { color:var(--muted); font-size:.72rem; }
+    .entry p { white-space:pre-wrap; margin:0; color:#e3d8ed; font-size:.88rem; overflow-wrap:anywhere; }
+    .empty { color:var(--muted); border:1px dashed #554364; border-radius:14px; padding:18px; text-align:center; font-size:.87rem; }
+    .growth { display:flex; align-items:center; gap:13px; }
+    .growth-icon { font-size:30px; }
+    .growth-copy { flex:1; }
+    .growth-copy strong { display:block; font-size:.9rem; margin-bottom:3px; }
+    .growth-copy span { color:var(--muted); font-size:.78rem; }
+    .growth-track { height:6px; background:#3b3146; border-radius:99px; margin-top:10px; overflow:hidden; }
+    .growth-track div { height:100%; background:linear-gradient(90deg,#c7a8ff,#ffb6d5); }
+    .visit-list { display:grid; gap:8px; margin-top:12px; }
+    .visit { display:flex; gap:10px; align-items:center; color:var(--muted); font-size:.82rem; }
+    .visit-icon { display:grid; place-items:center; width:30px;height:30px;border-radius:10px;background:#352940; }
+    footer { text-align:center; margin-top:22px; color:#8f819f; font-size:.76rem; line-height:1.6; }
+    .hidden { display:none !important; }
+    .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#f0d8a0; color:#21172a; border-radius:999px; padding:11px 16px; box-shadow:var(--shadow); font-size:.86rem; font-weight:800; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5; max-width:calc(100% - 24px); text-align:center; }
+    .toast.show { opacity:1; }
+    @media(max-width:800px) { .layout{grid-template-columns:1fr;} .pet-scene{min-height:320px;} }
+    @media(max-width:460px) { .wrap{width:min(100% - 20px,1120px);padding-top:18px;} .panel{padding:15px;border-radius:19px;} header{align-items:flex-start;} .local-pill{font-size:.68rem;padding:7px 9px;} .status-grid{gap:8px;} .stat{padding:10px;} .pet-scene{min-height:290px;} .actions{gap:8px;} button{padding:10px;} }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">☾</div>
+        <div><h1>Mooncat</h1><p class="subtitle">a tiny world for two faraway people</p></div>
+      </div>
+      <div class="local-pill" id="saveStatus">✦ saved on this device</div>
+    </header>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="pet-scene">
+          <div class="moon"></div><span class="star s1">✧</span><span class="star s2">✦</span><span class="star s3">✧</span>
+          <div class="cat" id="catFace" aria-label="Mooncat">🐈‍⬛</div>
+          <div class="pet-caption">
+            <h2 id="petNameDisplay">Moth</h2>
+            <p id="petMood">A little mysterious. Very fond of you both.</p>
+          </div>
+        </div>
+        <div class="section-head"><h2>How is the tiny creature?</h2><span class="eyebrow" id="stageLabel">BABY CAT</span></div>
+        <div class="status-grid">
+          <div class="stat"><div class="stat-top"><span>🍲 Fullness</span><span id="hungerValue">72%</span></div><div class="bar"><div class="fill gold" id="hungerBar"></div></div></div>
+          <div class="stat"><div class="stat-top"><span>♡ Happiness</span><span id="happyValue">78%</span></div><div class="bar"><div class="fill pink" id="happyBar"></div></div></div>
+          <div class="stat"><div class="stat-top"><span>☁ Energy</span><span id="energyValue">65%</span></div><div class="bar"><div class="fill mint" id="energyBar"></div></div></div>
+          <div class="stat"><div class="stat-top"><span>✧ Affection</span><span id="loveValue">12</span></div><div class="bar"><div class="fill" id="loveBar"></div></div></div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="feedBtn">🍲 Feed the cat</button>
+          <button id="playBtn">🧶 Play together</button>
+          <button id="cuddleBtn">♡ Give a cuddle</button>
+          <button id="sleepBtn">☾ Let them nap</button>
+        </div>
+        <p class="message" id="petMessage" aria-live="polite">Moth has appeared from the shadows to inspect your questionable life choices.</p>
+      </section>
+
+      <div class="right-stack">
+        <section class="panel">
+          <div class="section-head"><div><div class="eyebrow">the growing thing</div><h2 style="margin-top:5px">Growing up, slowly</h2></div><span id="growthEmoji" class="growth-icon">🐈‍⬛</span></div>
+          <div class="growth">
+            <div class="growth-copy"><strong id="growthTitle">Small shadow</strong><span id="growthText">Every little visit helps Moth grow.</span><div class="growth-track"><div id="growthBar" style="width:12%"></div></div></div>
+          </div>
+          <p class="tiny" style="margin:13px 0 0">Affection unlocks new stages. No punishment for being busy. Real life comes first.</p>
+        </section>
+
+        <section class="panel">
+          <div class="section-head"><div><div class="eyebrow">two people, one cat</div><h2 style="margin-top:5px">The little archive</h2></div><span>✉</span></div>
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-tab="notes">Notes</button>
+            <button class="tab" data-tab="memories">Memories</button>
+            <button class="tab" data-tab="visits">Visits</button>
+          </div>
+
+          <div id="notesPane">
+            <div class="form-row">
+              <div><label for="noteAuthor">Your name / nickname</label><input id="noteAuthor" maxlength="30" placeholder="e.g. Seven"></div>
+              <div><label for="noteText">Leave a note for your co-cat-parent</label><textarea id="noteText" maxlength="500" placeholder="A tiny message for when they visit..."></textarea></div>
+            </div>
+            <div class="form-actions"><button class="primary" id="addNoteBtn">Leave a note ✉</button></div>
+            <div class="list" id="notesList"></div>
+          </div>
+
+          <div id="memoriesPane" class="hidden">
+            <div class="form-row">
+              <div><label for="memoryTitle">Memory title</label><input id="memoryTitle" maxlength="70" placeholder="The time we..."></div>
+              <div><label for="memoryText">What should you remember?</label><textarea id="memoryText" maxlength="700" placeholder="A funny moment, a lovely thing, an inside joke..."></textarea></div>
+            </div>
+            <div class="form-actions"><button class="primary" id="addMemoryBtn">Save a memory ✦</button></div>
+            <div class="list" id="memoriesList"></div>
+          </div>
+
+          <div id="visitsPane" class="hidden">
+            <p class="tiny">Every time someone opens this page, Mooncat records a local visit. In this prototype, the log is only on this device.</p>
+            <div class="form-row"><div><label for="visitName">Who's visiting?</label><input id="visitName" maxlength="30" placeholder="e.g. Seven"></div></div>
+            <div class="form-actions"><button class="primary" id="logVisitBtn">Log my visit ☾</button></div>
+            <div class="visit-list" id="visitsList"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head"><h2>Pet settings</h2><span>⚙</span></div>
+          <div class="form-row"><div><label for="petNameInput">Cat's name</label><input id="petNameInput" maxlength="24" value="Moth"></div></div>
+          <div class="form-row"><div><label for="catStyle">Cat form</label><select id="catStyle"><option value="🐈‍⬛">Midnight cat 🐈‍⬛</option><option value="🐈">Moonlit cat 🐈</option><option value="🐱">Little gremlin 🐱</option><option value="😼">Suspicious cat 😼</option></select></div></div>
+          <div class="form-actions"><button class="primary" id="saveSettingsBtn">Save settings</button><button class="soft" id="exportBtn">Export save file</button><button class="soft" id="importBtn">Import save file</button><input type="file" id="importFile" accept="application/json" class="hidden"></div>
+          <p class="tiny" style="margin:12px 0 0">This prototype saves on the current browser only. Export/import lets you manually pass a save between devices, but it is not live multiplayer yet.</p>
+        </section>
+      </div>
+    </div>
+    <footer>Made of moonlight, questionable decisions, and friendship. ✦<br>Prototype edition: one browser at a time. Online syncing comes next.</footer>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  const KEY = "mooncat-prototype-v1";
+  const clamp = (n, min=0, max=100) => Math.max(min, Math.min(max, n));
+  const now = () => new Date().toISOString();
+  const prettyDate = iso => {
+    try { return new Intl.DateTimeFormat(undefined, {dateStyle:"medium", timeStyle:"short"}).format(new Date(iso)); }
+    catch { return iso; }
+  };
+  const freshState = () => ({
+    pet: { name:"Moth", face:"🐈‍⬛", hunger:72, happiness:78, energy:65, affection:12, visits:0, lastAction:now() },
+    notes: [],
+    memories: [],
+    visits: [],
+    createdAt:now(),
+    lastOpenedAt:now()
+  });
+  let state = load();
+  function load() {
+    try {
+      const saved = localStorage.getItem(KEY);
+      return saved ? {...freshState(), ...JSON.parse(saved), pet:{...freshState().pet, ...(JSON.parse(saved).pet || {})}} : freshState();
+    } catch { return freshState(); }
+  }
+  function persist() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      document.getElementById("saveStatus").textContent = "✦ saved on this device";
+    } catch {
+      document.getElementById("saveStatus").textContent = "save unavailable";
+    }
+  }
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg; el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 2300);
+  }
+  function setMessage(msg) { document.getElementById("petMessage").textContent = msg; }
+  function stage() {
+    const a = state.pet.affection;
+    if (a >= 100) return {label:"ANCIENT FAMILIAR", title:"Ancient familiar", text:"A wise little shadow with a suspiciously long memory.", emoji:"🌙", pct:100};
+    if (a >= 60) return {label:"MOON CAT", title:"Moon cat", text:"Has learned the art of appearing when needed.", emoji:"🐈‍⬛", pct:Math.min(100, a)};
+    if (a >= 25) return {label:"CURIOUS CAT", title:"Curious cat", text:"Beginning to trust the strange giants.", emoji:"🐈", pct:Math.min(100, a)};
+    return {label:"BABY CAT", title:"Small shadow", text:"Every little visit helps Moth grow.", emoji:"🐾", pct:Math.min(100, a)};
+  }
+  function render() {
+    const p = state.pet;
+    document.getElementById("petNameDisplay").textContent = p.name;
+    document.getElementById("catFace").textContent = p.face;
+    document.getElementById("petNameInput").value = p.name;
+    document.getElementById("catStyle").value = p.face;
+    [["hunger",p.hunger],["happy",p.happiness],["energy",p.energy],["love",p.affection]].forEach(([id,val]) => {
+      const value = document.getElementById(id+"Value"), bar = document.getElementById(id+"Bar");
+      value.textContent = id==="love" ? Math.round(val) : Math.round(val)+"%";
+      bar.style.width = clamp(val)+"%";
+    });
+    const s = stage();
+    document.getElementById("stageLabel").textContent = s.label;
+    document.getElementById("growthTitle").textContent = s.title;
+    document.getElementById("growthText").textContent = s.text;
+    document.getElementById("growthEmoji").textContent = s.emoji;
+    document.getElementById("growthBar").style.width = s.pct+"%";
+    renderList("notesList", state.notes, "No notes yet. Leave the first tiny message.");
+    renderList("memoriesList", state.memories, "No memories saved yet. Start your little archive.");
+    renderVisits();
+    persist();
+  }
+  function renderList(id, entries, empty) {
+    const el = document.getElementById(id);
+    if (!entries.length) { el.innerHTML = `<div class="empty">${empty}</div>`; return; }
+    el.innerHTML = entries.slice().reverse().map(e => `
+      <article class="entry">
+        <div class="entry-top"><strong>${escapeHtml(e.title || e.author || "A little thing")}</strong><time>${escapeHtml(prettyDate(e.at))}</time></div>
+        ${e.author && e.title ? `<div class="tiny" style="margin-bottom:6px">by ${escapeHtml(e.author)}</div>` : ""}
+        <p>${escapeHtml(e.text || "")}</p>
+      </article>`).join("");
+  }
+  function renderVisits() {
+    const el = document.getElementById("visitsList");
+    if (!state.visits.length) { el.innerHTML = '<div class="empty">No visits logged yet. The cat is waiting dramatically.</div>'; return; }
+    el.innerHTML = state.visits.slice().reverse().map(v => `
+      <div class="visit"><div class="visit-icon">☾</div><div><strong>${escapeHtml(v.name)}</strong><div class="tiny">${escapeHtml(prettyDate(v.at))}</div></div></div>`).join("");
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+  function act(kind) {
+    const p = state.pet;
+    if (kind === "feed") {
+      if (p.hunger >= 96) { setMessage(`${p.name} sniffs the food, then looks at you as if you've insulted the moon.`); return; }
+      p.hunger = clamp(p.hunger + 24); p.happiness = clamp(p.happiness + 4); p.affection += 2;
+      setMessage(`${p.name} eats politely, then steals one imaginary crumb for later.`);
+    } else if (kind === "play") {
+      if (p.energy < 15) { setMessage(`${p.name} is too sleepy to play. The cat has become a small comma.`); return; }
+      p.happiness = clamp(p.happiness + 18); p.energy = clamp(p.energy - 15); p.hunger = clamp(p.hunger - 7); p.affection += 4;
+      setMessage(`${p.name} chases a thread that may or may not lead to another dimension.`);
+    } else if (kind === "cuddle") {
+      p.happiness = clamp(p.happiness + 10); p.energy = clamp(p.energy + 3); p.affection += 5;
+      setMessage(`${p.name} permits one (1) cuddle. This is considered a sacred event.`);
+    } else if (kind === "sleep") {
+      p.energy = clamp(p.energy + 25); p.hunger = clamp(p.hunger - 4);
+      setMessage(`${p.name} curls into a crescent and dreams of fish, stars and tax evasion.`);
+    }
+    p.lastAction = now();
+    if (p.affection >= 100) p.affection = 100;
+    render();
+  }
+  document.getElementById("feedBtn").addEventListener("click", () => act("feed"));
+  document.getElementById("playBtn").addEventListener("click", () => act("play"));
+  document.getElementById("cuddleBtn").addEventListener("click", () => act("cuddle"));
+  document.getElementById("sleepBtn").addEventListener("click", () => act("sleep"));
+  document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+    const name = document.getElementById("petNameInput").value.trim();
+    state.pet.name = name || "Moth";
+    state.pet.face = document.getElementById("catStyle").value;
+    render(); toast("Pet settings saved ✦");
+  });
+  document.querySelectorAll("[data-tab]").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("active", b === btn));
+    ["notes","memories","visits"].forEach(name => document.getElementById(name+"Pane").classList.toggle("hidden", name !== btn.dataset.tab));
+  }));
+  document.getElementById("addNoteBtn").addEventListener("click", () => {
+    const author = document.getElementById("noteAuthor").value.trim() || "A mysterious friend";
+    const text = document.getElementById("noteText").value.trim();
+    if (!text) { toast("Write a tiny note first ✉"); return; }
+    state.notes.push({author,text,at:now()});
+    document.getElementById("noteText").value = "";
+    state.pet.affection = clamp(state.pet.affection + 1, 0, 100);
+    render(); toast("Note tucked into the archive ✉");
+  });
+  document.getElementById("addMemoryBtn").addEventListener("click", () => {
+    const title = document.getElementById("memoryTitle").value.trim() || "A little memory";
+    const text = document.getElementById("memoryText").value.trim();
+    if (!text) { toast("Add a memory first ✦"); return; }
+    state.memories.push({title,text,at:now()});
+    document.getElementById("memoryTitle").value = "";
+    document.getElementById("memoryText").value = "";
+    state.pet.affection = clamp(state.pet.affection + 2, 0, 100);
+    render(); toast("Memory kept safe ✦");
+  });
+  document.getElementById("logVisitBtn").addEventListener("click", () => {
+    const name = document.getElementById("visitName").value.trim() || "A mysterious friend";
+    state.visits.push({name,at:now()});
+    state.pet.visits += 1; state.pet.affection = clamp(state.pet.affection + 1, 0, 100);
+    render(); toast("Visit recorded ☾");
+  });
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mooncat-save.json"; a.click(); URL.revokeObjectURL(a.href);
+    toast("Save file exported");
+  });
+  document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+  document.getElementById("importFile").addEventListener("change", async e => {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    try {
+      const imported = JSON.parse(await file.text());
+      if (!imported.pet || !Array.isArray(imported.notes) || !Array.isArray(imported.memories) || !Array.isArray(imported.visits)) throw new Error("That doesn't look like a Mooncat save.");
+      state = imported; render(); toast("Mooncat save imported");
+    } catch (err) { toast(err.message || "Could not import that file"); }
+    e.target.value = "";
+  });
+  // This local prototype intentionally does not change stats just because the page is closed.
+  // Both players should be able to take breaks without the pet being punished.
+  state.lastOpenedAt = now();
+  render();
+})();
+</script>
+</body>
+</html>
